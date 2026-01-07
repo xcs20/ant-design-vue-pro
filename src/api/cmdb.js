@@ -31,6 +31,37 @@ export function deleteSnmpProfile (id) {
   })
 }
 
+export function listSnmpOidProfiles (params) {
+  return request({
+    url: '/snmp-oid-profiles/',
+    method: 'get',
+    params
+  })
+}
+
+export function createSnmpOidProfile (data) {
+  return request({
+    url: '/snmp-oid-profiles/',
+    method: 'post',
+    data
+  })
+}
+
+export function updateSnmpOidProfile (id, data) {
+  return request({
+    url: `/snmp-oid-profiles/${id}/`,
+    method: 'patch',
+    data
+  })
+}
+
+export function deleteSnmpOidProfile (id) {
+  return request({
+    url: `/snmp-oid-profiles/${id}/`,
+    method: 'delete'
+  })
+}
+
 export function listSwitches (params) {
   return request({
     url: '/switches/',
@@ -75,6 +106,14 @@ export function syncSwitchInterfaces (switchId) {
     url: '/switch-interfaces/sync-snmp/',
     method: 'post',
     data: { switch: switchId }
+  })
+}
+
+export function updateSwitchInterface (id, data) {
+  return request({
+    url: `/switch-interfaces/${id}/`,
+    method: 'patch',
+    data
   })
 }
 

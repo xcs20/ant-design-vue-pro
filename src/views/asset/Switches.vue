@@ -21,6 +21,7 @@
 
       <div class="table-operator">
         <a-button v-if="$auth('switch.add')" type="primary" icon="plus" @click="openCreate">新建</a-button>
+        <a-button style="margin-left: 8px" icon="download" @click="exportCsv">导出</a-button>
       </div>
 
       <a-table
@@ -170,6 +171,7 @@ export default {
         { title: '名称', dataIndex: 'name', key: 'name', width: 180 },
         { title: '主机名', dataIndex: 'hostname', key: 'hostname', width: 180 },
         { title: '管理IP', dataIndex: 'ip_address', key: 'ip_address', width: 140 },
+        { title: '版本', dataIndex: 'version_info', key: 'version_info', width: 200 },
         { title: '状态', dataIndex: 'status_label', key: 'status_label', width: 90 },
         { title: 'SNMP', dataIndex: 'snmp_enabled', key: 'snmp_enabled', width: 90, scopedSlots: { customRender: 'snmp_enabled' } },
         { title: 'SNMP配置', dataIndex: 'snmp_profile_name', key: 'snmp_profile_name', width: 180 },
@@ -235,6 +237,32 @@ export default {
     },
     handleTableChange (pagination) {
       this.fetch(pagination.current || 1)
+    },
+    exportCsv () {
+      if (!this.dataSource.length) {
+        this.$message.info('没有数据可导出')
+        return
+      }
+      const headers = ['资产编号', '名称', '主机名', '管理IP', '版本', '状态', 'SNMP', 'SNMP配置', '位置']
+      const rows = this.dataSource.map(r => [
+        r.asset_tag,
+        r.name,
+        r.hostname,
+        r.ip_address,
+        r.version_info,
+        r.status_label,
+        r.snmp_enabled ? '启用' : '关闭',
+        r.snmp_profile_name,
+        r.location_name
+      ])
+      const csv = [headers, ...rows].map(r => r.map(x => `"${(x || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'switches.csv'
+      link.click()
+      URL.revokeObjectURL(url)
     },
     async handleSync (record) {
       this.syncLoadingId = record.id

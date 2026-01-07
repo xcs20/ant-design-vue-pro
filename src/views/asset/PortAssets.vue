@@ -28,8 +28,9 @@
           :loading="syncing"
           @click="syncFromNetdisco"
         >
-          同步资产
+          同步 IP 资产
         </a-button>
+        <a-button style="margin-left: 8px" icon="download" @click="exportCsv">导出</a-button>
       </div>
 
       <a-table
@@ -141,10 +142,12 @@ export default {
       },
       columns: [
         { title: '交换机', dataIndex: 'switch_asset_tag', key: 'switch_asset_tag', width: 160 },
-        { title: '端口', dataIndex: 'port', key: 'port', width: 120 },
+        { title: '接口', dataIndex: 'physical_port', key: 'physical_port', width: 120 },
         { title: 'IP', dataIndex: 'ip_address', key: 'ip_address', width: 140 },
         { title: 'MAC', dataIndex: 'mac_address', key: 'mac_address', width: 180 },
         { title: 'VLAN', dataIndex: 'vlan', key: 'vlan', width: 90 },
+        { title: 'Vlanif', dataIndex: 'vlanif_name', key: 'vlanif_name', width: 120 },
+        { title: 'Vlanif网关', dataIndex: 'vlan_gateway', key: 'vlan_gateway', width: 160 },
         { title: '状态', dataIndex: 'is_active', key: 'is_active', width: 90, scopedSlots: { customRender: 'is_active' } },
         { title: '备注', dataIndex: 'notes', key: 'notes', width: 260 },
         { title: '操作', key: 'actions', width: 160, fixed: 'right', scopedSlots: { customRender: 'actions' } }
@@ -296,6 +299,32 @@ export default {
           // ignore
         }
       }, 250)
+    },
+    exportCsv () {
+      if (!this.dataSource.length) {
+        this.$message.info('没有数据可导出')
+        return
+      }
+      const headers = ['交换机', '接口', 'IP', 'MAC', 'VLAN', 'Vlanif', 'Vlanif网关', '状态', '备注']
+      const rows = this.dataSource.map(r => [
+        r.switch_asset_tag,
+        r.physical_port,
+        r.ip_address,
+        r.mac_address,
+        r.vlan,
+        r.vlanif_name,
+        r.vlan_gateway,
+        r.is_active ? '启用' : '停用',
+        r.notes
+      ])
+      const csv = [headers, ...rows].map(r => r.map(x => `"${(x || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'port-assets.csv'
+      link.click()
+      URL.revokeObjectURL(url)
     }
   }
 }

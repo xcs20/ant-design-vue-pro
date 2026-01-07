@@ -6,13 +6,26 @@
         <a-form-item label="系统名称">
           <a-input v-decorator="['system_name']" placeholder="可选，留空不改" />
         </a-form-item>
+        <a-form-item label="系统 Logo">
+          <a-input v-decorator="['system_logo']" placeholder="粘贴图片地址，或使用下方上传" />
+          <div style="margin-top: 8px">
+            <a-upload :showUploadList="false" :customRequest="handleUpload">
+              <a-button icon="upload">上传图片</a-button>
+            </a-upload>
+            <small style="margin-left: 8px">支持上传图片文件，建议 2MB 内</small>
+          </div>
+          <div v-if="form.getFieldValue('system_logo')" style="margin-top: 8px">
+            <a-avatar :src="form.getFieldValue('system_logo')" shape="square" :size="64" />
+            <span style="margin-left: 8px">{{ form.getFieldValue('system_logo') }}</span>
+          </div>
+        </a-form-item>
 
         <a-divider>密码复杂度</a-divider>
         <a-row :gutter="12">
           <a-col :md="8" :sm="24">
             <a-form-item label="最小长度">
               <a-input-number
-                v-decorator="['password_min_length', { rules: [{ required: true, message: '请输入最小长度' }], initialValue: 8 }]"
+                v-decorator="['password_min_length', { initialValue: 8 }]"
                 :min="6"
                 :max="128"
                 style="width: 100%"
@@ -55,7 +68,7 @@
               <a-input
                 v-decorator="[
                   'asset_tag_pattern',
-                  { rules: [{ required: true, message: '请输入编号规则' }] }
+                  { }
                 ]"
                 placeholder="如 AS{YYMMDD}{SEQ3}"
               />
@@ -83,7 +96,7 @@
 </template>
 
 <script>
-import { listSystemSettings, updateSystemSetting } from '@/api/system'
+import { listSystemSettings, updateSystemSetting, uploadSystemLogo } from '@/api/system'
 
 export default {
   name: 'SystemSettings',
@@ -127,6 +140,7 @@ export default {
           if (setting) {
             this.form.setFieldsValue({
               system_name: setting.system_name,
+              system_logo: setting.system_logo,
               password_min_length: setting.password_min_length,
               password_require_uppercase: setting.password_require_uppercase,
               password_require_lowercase: setting.password_require_lowercase,
@@ -145,6 +159,27 @@ export default {
         })
       } finally {
         this.loading = false
+      }
+    },
+    async handleUpload ({ file, onError, onSuccess }) {
+      if (!this.setting) {
+        onError(new Error('未加载到系统设置'))
+        return
+      }
+      try {
+        const res = await uploadSystemLogo(this.setting.id, file)
+        const url = res.url || res.path || ''
+        if (url) {
+          this.form.setFieldsValue({ system_logo: url })
+          this.$message.success('上传成功')
+          onSuccess(res, file)
+        } else {
+          throw new Error('上传结果为空')
+        }
+      } catch (e) {
+        const detail = (e.response && e.response.data && e.response.data.detail) || e.message
+        this.$notification.error({ message: '上传失败', description: detail })
+        onError(e)
       }
     },
     handleSave () {

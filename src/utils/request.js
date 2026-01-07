@@ -5,6 +5,8 @@ import notification from 'ant-design-vue/es/notification'
 import { VueAxios } from './axios'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 
+let isLoggingOut = false
+
 // 创建 axios 实例
 const request = axios.create({
   // API 请求的默认前缀
@@ -29,11 +31,13 @@ const errorHandler = (error) => {
         message: 'Unauthorized',
         description: 'Authorization verification failed'
       })
-      if (token) {
-        store.dispatch('Logout').then(() => {
-          setTimeout(() => {
-            window.location.reload()
-          }, 1500)
+      const reqUrl = (error.config && error.config.url) || ''
+      // 避免在 /auth/logout 自身或重复触发时无限请求
+      if (token && !isLoggingOut && !reqUrl.includes('/auth/logout')) {
+        isLoggingOut = true
+        store.dispatch('Logout').finally(() => {
+          isLoggingOut = false
+          window.location.replace('/user/login')
         })
       }
     }
