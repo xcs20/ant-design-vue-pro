@@ -6,13 +6,9 @@
     </span>
     <template v-slot:overlay>
       <a-menu class="ant-pro-drop-down menu" :selected-keys="[]">
-        <a-menu-item v-if="menu" key="center" @click="handleToCenter">
+        <a-menu-item v-if="menu" key="account" @click="handleToAccount">
           <a-icon type="user" />
           {{ $t('menu.account.center') }}
-        </a-menu-item>
-        <a-menu-item v-if="menu" key="settings" @click="handleToSettings">
-          <a-icon type="setting" />
-          {{ $t('menu.account.settings') }}
         </a-menu-item>
         <a-menu-divider v-if="menu" />
         <a-menu-item key="logout" @click="handleLogout">
@@ -43,11 +39,8 @@ export default {
     }
   },
   methods: {
-    handleToCenter () {
-      this.$router.push({ path: '/account/center' })
-    },
-    handleToSettings () {
-      this.$router.push({ path: '/account/settings' })
+    handleToAccount () {
+      this.$router.push({ path: '/account' })
     },
     handleLogout (e) {
       Modal.confirm({

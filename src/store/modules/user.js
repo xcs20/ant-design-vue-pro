@@ -72,6 +72,9 @@ const user = {
             commit('SET_INFO', result)
             commit('SET_NAME', { name: result.name, welcome: welcome() })
             commit('SET_AVATAR', result.avatar)
+            if (result.system && result.system.name) {
+              commit('SET_SITE_TITLE', result.system.name)
+            }
             // 下游
             resolve(result)
           } else {

@@ -68,7 +68,7 @@ const rootRouter = {
   name: 'index',
   path: '',
   component: 'BasicLayout',
-  redirect: '/dashboard',
+  redirect: '',
   meta: {
     title: '首页'
   },
@@ -95,6 +95,7 @@ export const generatorDynamicRouter = token => {
         const childrenNav = []
         //      后端数据, 根级树数组,  根级 PID
         listToTree(result, childrenNav, 0)
+        rootRouter.redirect = findFirstPath(childrenNav) || '/404'
         rootRouter.children = childrenNav
         menuNav.push(rootRouter)
         console.log('menuNav', menuNav)
@@ -107,6 +108,18 @@ export const generatorDynamicRouter = token => {
         reject(err)
       })
   })
+}
+
+function findFirstPath (nodes) {
+  if (!nodes || nodes.length === 0) return null
+  for (const node of nodes) {
+    if (node.children && node.children.length > 0) {
+      const nested = findFirstPath(node.children)
+      if (nested) return nested
+    }
+    if (node.path) return node.path
+  }
+  return null
 }
 
 /**

@@ -1,4 +1,5 @@
 import storage from 'store'
+import defaultSettings from '@/config/defaultSettings'
 import {
   SIDEBAR_TYPE,
   TOGGLE_MOBILE_TYPE,
@@ -18,6 +19,7 @@ import { loadLanguageAsync } from '@/locales'
 
 const app = {
   state: {
+    siteTitle: storage.get('SITE_TITLE') || defaultSettings.title,
     sideCollapsed: false,
     isMobile: false,
     theme: 'dark',
@@ -80,6 +82,11 @@ const app = {
     [TOGGLE_MULTI_TAB]: (state, bool) => {
       storage.set(TOGGLE_MULTI_TAB, bool)
       state.multiTab = bool
+    },
+    SET_SITE_TITLE: (state, title) => {
+      const finalTitle = (title || '').trim() || defaultSettings.title
+      state.siteTitle = finalTitle
+      storage.set('SITE_TITLE', finalTitle)
     }
   },
   actions: {

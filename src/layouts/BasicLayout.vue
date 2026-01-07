@@ -82,7 +82,6 @@ export default {
       menus: [],
       // 侧栏收起状态
       collapsed: false,
-      title: defaultSettings.title,
       settings: {
         // 布局类型
         layout: defaultSettings.layout, // 'sidemenu', 'topmenu'
@@ -110,7 +109,10 @@ export default {
     ...mapState({
       // 动态主路由
       mainMenu: state => state.permission.addRouters
-    })
+    }),
+    title () {
+      return this.$store.getters.siteTitle || defaultSettings.title
+    }
   },
   created () {
     const routes = this.mainMenu.find(item => item.path === '/')

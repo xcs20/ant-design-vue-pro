@@ -1,4 +1,5 @@
 import config from '@/config/defaultSettings'
+import storage from 'store'
 
 export const setDocumentTitle = function (title) {
   document.title = title
@@ -18,4 +19,6 @@ export const setDocumentTitle = function (title) {
   }
 }
 
-export const domTitle = config.title
+export const getDomTitle = function () {
+  return storage.get('SITE_TITLE') || config.title
+}
