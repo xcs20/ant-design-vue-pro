@@ -24,6 +24,13 @@ export function updateIpRange (id, data) {
   })
 }
 
+export function fetchFreeIp (id) {
+  return request({
+    url: `/ip-ranges/${id}/free-ip/`,
+    method: 'get'
+  })
+}
+
 export function deleteIpRange (id) {
   return request({
     url: `/ip-ranges/${id}/`,

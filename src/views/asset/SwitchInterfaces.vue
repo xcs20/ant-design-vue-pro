@@ -5,12 +5,12 @@
         <a-form layout="inline">
           <a-row :gutter="24">
             <a-col :md="8" :sm="24">
-              <a-form-item label="交换机">
+              <a-form-item label="网络设备">
                 <a-select
                   v-model="query.switch"
                   showSearch
                   allowClear
-                  placeholder="选择交换机"
+                  placeholder="选择网络设备"
                   :filterOption="false"
                   @search="onSwitchSearch"
                 >
@@ -53,7 +53,7 @@
         :dataSource="dataSource"
         :loading="loading"
         :pagination="pagination"
-        :scroll="{ x: 1400 }"
+        :scroll="{ x: 1400, y: tableHeight }"
         rowKey="id"
         @change="handleTableChange"
       >
@@ -174,9 +174,10 @@ export default {
         pageSizeOptions: ['10', '20', '30', '50', '100'],
         showTotal: (total) => `共 ${total} 条`
       },
+      tableHeight: 520,
       columns: [
         { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-        { title: '交换机', dataIndex: 'switch', key: 'switch', width: 160, customRender: (_, record) => (record.switch_name || record.switch) },
+        { title: '网络设备', dataIndex: 'switch', key: 'switch', width: 160, customRender: (_, record) => (record.switch_name || record.switch) },
         { title: '接口', dataIndex: 'name', key: 'name', width: 140 },
         { title: '类型', dataIndex: 'interface_type_label', key: 'interface_type_label', width: 110 },
         { title: '状态', dataIndex: 'oper_status', key: 'oper_status', width: 100, scopedSlots: { customRender: 'status' } },
@@ -201,7 +202,18 @@ export default {
     this.fetch(1)
     this.onSwitchSearch('')
   },
+  mounted () {
+    this.updateTableHeight()
+    window.addEventListener('resize', this.updateTableHeight)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.updateTableHeight)
+  },
   methods: {
+    updateTableHeight () {
+      const h = window.innerHeight || 800
+      this.tableHeight = Math.max(h - 260, 220)
+    },
     statusLabel (record) {
       if (record.oper_status === 1 || record.oper_status === '1') return 'UP'
       if (record.oper_status === 2 || record.oper_status === '2') return 'DOWN'
@@ -259,12 +271,19 @@ export default {
       this.syncing = true
       try {
         const res = await syncSwitchInterfaces(this.query.switch || null)
-        const detail = res
-          ? `接口 ${res.interfaces || 0} 条，地址 ${res.addresses || 0} 条，跳过 ${res.skipped || 0}`
-          : 'SNMP 同步接口成功'
-        this.$notification.success({ message: '同步完成', description: detail })
-        console.log('[SyncInterfaces] result', res)
-        this.fetch(1)
+        if (res && res.status === 'queued') {
+          this.$notification.success({
+            message: '已提交同步任务',
+            description: `任务ID ${res.task_id}`
+          })
+        } else {
+          const detail = res
+            ? `接口 ${res.interfaces || 0} 条，地址 ${res.addresses || 0} 条，跳过 ${res.skipped || 0}`
+            : 'SNMP 同步接口成功'
+          this.$notification.success({ message: '同步完成', description: detail })
+          console.log('[SyncInterfaces] result', res)
+          this.fetch(1)
+        }
       } catch (e) {
         this.$notification.error({
           message: '同步失败',

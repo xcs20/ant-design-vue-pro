@@ -31,7 +31,7 @@
     <template v-slot:headerContentRender>
       <div>
         <a-tooltip title="刷新页面">
-          <a-icon type="reload" style="font-size: 18px;cursor: pointer;" @click="() => { $message.info('只是一个DEMO') }" />
+          <a-icon type="reload" style="font-size: 18px;cursor: pointer;" @click="handleRefresh" />
         </a-tooltip>
       </div>
     </template>
@@ -76,7 +76,7 @@ export default {
       // preview.pro.antdv.com only use.
       isProPreviewSite: process.env.VUE_APP_PREVIEW === 'true' && process.env.NODE_ENV !== 'development',
       // end
-      isDev: process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
+    isDev: process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
 
       // base
       menus: [],
@@ -143,6 +143,10 @@ export default {
     }
   },
   methods: {
+    handleRefresh () {
+      // 直接刷新当前页面，确保最新配置和数据
+      window.location.reload()
+    },
     i18nRender,
     handleMediaQuery (val) {
       this.query = val

@@ -62,6 +62,37 @@ export function deleteSnmpOidProfile (id) {
   })
 }
 
+export function listPolicyProfiles (params) {
+  return request({
+    url: '/policy-profiles/',
+    method: 'get',
+    params
+  })
+}
+
+export function createPolicyProfile (data) {
+  return request({
+    url: '/policy-profiles/',
+    method: 'post',
+    data
+  })
+}
+
+export function updatePolicyProfile (id, data) {
+  return request({
+    url: `/policy-profiles/${id}/`,
+    method: 'patch',
+    data
+  })
+}
+
+export function deletePolicyProfile (id) {
+  return request({
+    url: `/policy-profiles/${id}/`,
+    method: 'delete'
+  })
+}
+
 export function listSwitches (params) {
   return request({
     url: '/switches/',
@@ -90,6 +121,17 @@ export function deleteSwitch (id) {
   return request({
     url: `/switches/${id}/`,
     method: 'delete'
+  })
+}
+
+export function importSwitches (file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/switches/bulk-import/',
+    method: 'post',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
 
@@ -129,5 +171,36 @@ export function listLocations (params) {
     url: '/locations/',
     method: 'get',
     params
+  })
+}
+
+export function listVendors (params) {
+  return request({
+    url: '/vendors/',
+    method: 'get',
+    params
+  })
+}
+
+export function createVendor (data) {
+  return request({
+    url: '/vendors/',
+    method: 'post',
+    data
+  })
+}
+
+export function updateVendor (id, data) {
+  return request({
+    url: `/vendors/${id}/`,
+    method: 'patch',
+    data
+  })
+}
+
+export function deleteVendor (id) {
+  return request({
+    url: `/vendors/${id}/`,
+    method: 'delete'
   })
 }

@@ -1,97 +1,120 @@
-@import '~ant-design-vue/es/style/themes/default.less';
+@import '~ant-design-vue/es/style/themes/default.less'; /* 引入默认主题变量 */
 
-html,
-body,
-#app,
-#root {
-  height: 100%;
+html, /* html 节点占满高度 */
+body, /* body 节点占满高度 */
+#app, /* Vue 挂载根节点占满高度 */
+#root { /* 兼容 pro-layout 根节点高度 */
+  height: auto; /* 全局高度 100% */
 }
 
-.colorWeak {
-  filter: invert(80%);
+.colorWeak { /* 弱色模式样式 */
+  filter: invert(60%); /* 颜色反转 80% */
 }
 
-.ant-layout.layout-basic {
-  height: 100vh;
-  min-height: 100vh;
+.ant-layout.layout-basic { /* 基础布局容器 */
+  height: 100vh; /* 占满视口高度 */
+  min-height: 100vh; /* 最小高度视口 */
 }
 
-canvas {
-  display: block;
+canvas { /* 画布默认块级 */
+  display: block; /* 避免内联空白 */
 }
 
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizelegibility;
+body { /* 全局字体平滑 */
+  -webkit-font-smoothing: antialiased; /* WebKit 抗锯齿 */
+  -moz-osx-font-smoothing: grayscale; /* macOS 灰度平滑 */
+  text-rendering: optimizelegibility; /* 优化文本渲染 */
 }
 
-ul,
-ol {
-  list-style: none;
+ul, /* 无序列表 */
+ol { /* 有序列表 */
+  list-style: none; /* 去除默认列表样式 */
 }
 
-// 数据列表 样式
-.table-alert {
-  margin-bottom: 16px;
+// 数据列表 样式（保留默认间距）
+.table-alert { /* 表格顶部提示 */
+  margin-bottom: 16px; /* 提示区下边距 */
 }
-// 数据列表 操作
-.table-operator {
-  margin-bottom: 18px;
 
-  button {
-    margin-right: 8px;
+// 数据列表 操作按钮区域
+.table-operator { /* 表格操作区域 */
+  margin-bottom: 10px; /* 下边距 */
+
+  button { /* 操作按钮 */
+    margin-right: 8px; /* 按钮右间距 */
   }
 }
-// 数据列表 搜索条件
-.table-page-search-wrapper {
-  .ant-form-inline {
-    .ant-form-item {
-      display: flex;
-      margin-right: 0;
-      margin-bottom: 24px;
 
-      .ant-form-item-control-wrapper {
-        flex: 1 1;
-        display: inline-block;
-        vertical-align: middle;
+// 数据列表 搜索条件区域
+.table-page-search-wrapper { /* 搜索表单容器 */
+  .ant-form-inline { /* 行内表单样式 */
+    .ant-form-item { /* 表单项 */
+      display: flex; /* 弹性布局 */
+      margin-right: 0; /* 取消右边距 */
+      margin-bottom: 10px; /* 下边距 */
+
+      .ant-form-item-control-wrapper { /* 控件包裹 */
+        flex: 1 1; /* 占满剩余 */
+        display: inline-block; /* 保持行内块 */
+        vertical-align: middle; /* 垂直居中 */
       }
 
-      > .ant-form-item-label {
-        width: auto;
-        padding-right: 8px;
-        line-height: 32px;
+      > .ant-form-item-label { /* 表单标签 */
+        width: auto; /* 自适应宽度 */
+        padding-right: 4px; /* 标签右内边距 */
+        line-height: 20px; /* 行高 32 */
       }
 
-      .ant-form-item-control {
-        height: 32px;
-        line-height: 32px;
+      .ant-form-item-control { /* 控件主体 */
+        height: 32px; /* 高度 32 */
+        line-height: 32px; /* 行高 32 */
       }
     }
   }
 
-  .table-page-search-submitButtons {
-    display: block;
-    margin-bottom: 24px;
-    white-space: nowrap;
+  .table-page-search-submitButtons { /* 搜索按钮容器 */
+    display: block; /* 块级显示 */
+    margin-bottom: 24px; /* 下边距 */
+    white-space: nowrap; /* 不换行 */
   }
 }
 
-@media (max-width: @screen-xs) {
-  .ant-table {
-    width: 100%;
-    overflow-x: auto;
+@media (max-width: @screen-xs) { /* 移动端适配 */
+  .ant-table { /* 表格容器 */
+    width: 100%; /* 宽度全屏 */
+    overflow-x: auto; /* 横向滚动 */
 
-    &-thead > tr,
-    &-tbody > tr {
-      > th,
-      > td {
-        white-space: pre;
+    &-thead > tr, /* 表头行 */
+    &-tbody > tr { /* 表体行 */
+      > th, /* 表头单元格 */
+      > td { /* 表体单元格 */
+        white-space: pre; /* 保留空格 */
 
-        > span {
-          display: block;
+        > span { /* 内部 span */
+          display: block; /* 块级显示 */
         }
       }
     }
   }
+}
+
+// 自适应侧边导航高度，导航多时可滚动
+.ant-layout-sider .ant-menu { /* 侧边菜单 */
+  height: 100%; /* 占满视口高 */
+  // overflow-y: ; /* 纵向滚动 */
+}
+
+// 去除页面头部的面包屑与导航栏间距
+.ant-pro-page-header-wrap { /* PageHeader 包裹 */
+  padding-top: 0; /* 去顶部间距 */
+  padding-bottom: 0; /* 去底部间距 */
+}
+.ant-pro-page-header-wrap-breadcrumb, /* 面包屑容器 */
+.ant-pro-page-header-wrap-main { /* PageHeader 主体 */
+  display: flex; /* 隐藏显示 */
+}
+
+// 全局隐藏页面头部的面包屑（顶端路径不再显示）
+.ant-breadcrumb { /* 面包屑组件 */
+  display: none !important; /* 强制隐藏 */
 }

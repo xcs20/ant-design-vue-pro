@@ -10,7 +10,7 @@
           <div class="header">
             <a href="/">
               <img src="~@/assets/logo.svg" class="logo" alt="logo">
-              <span class="title">Ant Design</span>
+              <span class="title">{{ systemName }}</span>
             </a>
           </div>
           <div class="desc">
@@ -21,13 +21,9 @@
         <router-view />
 
         <div class="footer">
-          <div class="links">
-            <a href="_self">帮助</a>
-            <a href="_self">隐私</a>
-            <a href="_self">条款</a>
-          </div>
+
           <div class="copyright">
-            Copyright &copy; 2018 vueComponent
+            Copyright &copy; 2026 颐点科技
           </div>
         </div>
       </div>
@@ -45,6 +41,12 @@ export default {
     SelectLang
   },
   mixins: [deviceMixin],
+  computed: {
+    systemName () {
+      const setting = this.$store.state.user && this.$store.state.user.info && this.$store.state.user.info.system
+      return (setting && setting.name) || '资产运维系统'
+    }
+  },
   mounted () {
     document.body.classList.add('userLayout')
   },
@@ -56,7 +58,7 @@ export default {
 
 <style lang="less" scoped>
 #userLayout.user-layout-wrapper {
-  height: 100%;
+  min-height: 100vh;
 
   &.mobile {
     .container {
@@ -69,11 +71,13 @@ export default {
 
   .container {
     width: 100%;
-    min-height: 100%;
+    min-height: 100vh;
     background: #f0f2f5 url(~@/assets/background.svg) no-repeat 50%;
     background-size: 100%;
-    //padding: 50px 0 84px;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     .user-layout-lang {
       width: 100%;
@@ -95,6 +99,12 @@ export default {
 
     .user-layout-content {
       padding: 32px 0 24px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
 
       .top {
         text-align: center;
@@ -144,11 +154,9 @@ export default {
       }
 
       .footer {
-        // position: absolute;
         width: 100%;
-        bottom: 0;
         padding: 0 16px;
-        margin: 48px 0 24px;
+        margin: 24px 0 16px;
         text-align: center;
 
         .links {

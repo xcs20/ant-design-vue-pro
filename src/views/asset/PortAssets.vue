@@ -6,7 +6,7 @@
           <a-row :gutter="24">
             <a-col :md="10" :sm="24">
               <a-form-item label="关键字">
-                <a-input v-model="query.q" placeholder="IP/MAC/端口/交换机" />
+                <a-input v-model="query.q" placeholder="IP/MAC/端口/网络设备" />
               </a-form-item>
             </a-col>
             <a-col :md="14" :sm="24">
@@ -38,7 +38,7 @@
         :dataSource="dataSource"
         :loading="loading"
         :pagination="pagination"
-        :scroll="{ x: 1200 }"
+        :scroll="{ x: 1200, y: tableHeight }"
         rowKey="id"
         @change="handleTableChange"
       >
@@ -66,12 +66,12 @@
         <a-form :form="form" layout="vertical">
           <a-row :gutter="12">
             <a-col :md="12" :sm="24">
-              <a-form-item label="交换机">
+              <a-form-item label="网络设备">
                 <a-select
                   v-decorator="['switch', { rules: [{ required: true, message: '请选择交换机' }] }]"
                   showSearch
                   allowClear
-                  placeholder="输入关键字搜索交换机"
+                  placeholder="输入关键字搜索网络设备"
                   :filterOption="false"
                   @search="onSwitchSearch"
                 >
@@ -140,8 +140,9 @@ export default {
         total: 0,
         showTotal: (total) => `共 ${total} 条`
       },
+      tableHeight: 520,
       columns: [
-        { title: '交换机', dataIndex: 'switch_asset_tag', key: 'switch_asset_tag', width: 160 },
+        { title: '网络设备', dataIndex: 'switch_asset_tag', key: 'switch_asset_tag', width: 160 },
         { title: '接口', dataIndex: 'physical_port', key: 'physical_port', width: 120 },
         { title: 'IP', dataIndex: 'ip_address', key: 'ip_address', width: 140 },
         { title: 'MAC', dataIndex: 'mac_address', key: 'mac_address', width: 180 },
@@ -171,7 +172,18 @@ export default {
     this.fetch(1)
     this.onSwitchSearch('')
   },
+  mounted () {
+    this.updateTableHeight()
+    window.addEventListener('resize', this.updateTableHeight)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.updateTableHeight)
+  },
   methods: {
+    updateTableHeight () {
+      const h = window.innerHeight || 800
+      this.tableHeight = Math.max(h - 260, 220)
+    },
     async fetch (page) {
       this.loading = true
       try {
@@ -271,14 +283,21 @@ export default {
       this.syncing = true
       try {
         const res = await syncPortAssetsSnmp()
-        const detail = res
-          ? `新增 ${res.created || 0}，更新 ${res.updated || 0}，跳过 ${res.skipped || 0}，错误 ${res.errors || 0}`
-          : '已触发 SNMP 同步端口资产'
-        this.$notification.success({
-          message: '同步完成',
-          description: detail
-        })
-        this.fetch(1)
+        if (res && res.status === 'queued') {
+          this.$notification.success({
+            message: '已提交同步任务',
+            description: `任务ID ${res.task_id}`
+          })
+        } else {
+          const detail = res
+            ? `新增 ${res.created || 0}，更新 ${res.updated || 0}，跳过 ${res.skipped || 0}，错误 ${res.errors || 0}`
+            : '已触发 SNMP 同步端口资产'
+          this.$notification.success({
+            message: '同步完成',
+            description: detail
+          })
+          this.fetch(1)
+        }
       } catch (e) {
         const data = (e.response && e.response.data) || {}
         const detail = data.detail || data.message || JSON.stringify(data)

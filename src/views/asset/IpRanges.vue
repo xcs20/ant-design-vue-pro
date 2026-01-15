@@ -36,7 +36,7 @@
         :dataSource="dataSource"
         :loading="loading"
         :pagination="pagination"
-        :scroll="{ x: 1280 }"
+        :scroll="{ x: 1280, y: tableHeight }"
         rowKey="id"
         @change="handleTableChange"
       >
@@ -48,6 +48,8 @@
           <span>{{ Number(text || 0).toFixed(1) }}%</span>
         </template>
         <template slot="actions" slot-scope="text, record">
+          <a @click="handleFetchIp(record)">获取 IP</a>
+          <a-divider type="vertical" />
           <a v-if="$auth('ip-range.update')" @click="openEdit(record)">编辑</a>
           <a-divider v-if="$auth('ip-range.update') && $auth('ip-range.delete')" type="vertical" />
           <a-popconfirm v-if="$auth('ip-range.delete')" title="确认删除该 IP 段？" @confirm="() => handleDelete(record)">
@@ -119,7 +121,7 @@
 </template>
 
 <script>
-import { createIpRange, deleteIpRange, listIpRanges, updateIpRange } from '@/api/ipRanges'
+import { createIpRange, deleteIpRange, listIpRanges, updateIpRange, fetchFreeIp } from '@/api/ipRanges'
 
 export default {
   name: 'IpRanges',
@@ -134,6 +136,7 @@ export default {
         total: 0,
         showTotal: (total) => `共 ${total} 条`
       },
+      tableHeight: 520,
       columns: [
         { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
         { title: 'IP 段', dataIndex: 'cidr', key: 'cidr', width: 160 },
@@ -163,7 +166,18 @@ export default {
   created () {
     this.fetch(1)
   },
+  mounted () {
+    this.updateTableHeight()
+    window.addEventListener('resize', this.updateTableHeight)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.updateTableHeight)
+  },
   methods: {
+    updateTableHeight () {
+      const h = window.innerHeight || 800
+      this.tableHeight = Math.max(h - 260, 220)
+    },
     async fetch (page = 1) {
       this.loading = true
       try {
@@ -182,6 +196,27 @@ export default {
         })
       } finally {
         this.loading = false
+      }
+    },
+    async handleFetchIp (record) {
+      try {
+        const res = await fetchFreeIp(record.id)
+        const ip = (res && res.ip) || ''
+        if (ip) {
+          if (this.$info) {
+            this.$info({
+              title: '可用 IP',
+              content: `网段：${record.cidr} 可用 IP：${ip}`
+            })
+          } else {
+            this.$message.success(`网段：${record.cidr} 可用 IP：${ip}`)
+          }
+        } else {
+          this.$message.warning('未找到可用 IP')
+        }
+      } catch (e) {
+        const detail = (e.response && e.response.data && e.response.data.detail) || e.message || '未找到可用 IP'
+        this.$notification.error({ message: '获取失败', description: detail })
       }
     },
     reset () {

@@ -22,6 +22,18 @@
       <div class="table-operator">
         <a-button v-if="$auth('switch.add')" type="primary" icon="plus" @click="openCreate">新建</a-button>
         <a-button style="margin-left: 8px" icon="download" @click="exportCsv">导出</a-button>
+        <a-upload
+          v-if="$auth('switch.add') || $auth('switch.update')"
+          :showUploadList="false"
+          :beforeUpload="() => false"
+          @change="handleImport"
+          style="margin-left: 8px"
+        >
+          <a-button icon="upload">批量导入</a-button>
+        </a-upload>
+        <a-tooltip title="CSV列：asset_tag,name,hostname,ip_address,vendor_id,category_id,location_id,snmp_profile_id,snmp_enabled,snmp_port,status,notes">
+          <a-icon type="info-circle" style="margin-left: 8px; color: #888" />
+        </a-tooltip>
       </div>
 
       <a-table
@@ -29,7 +41,7 @@
         :dataSource="dataSource"
         :loading="loading"
         :pagination="pagination"
-        :scroll="{ x: 1320 }"
+        :scroll="{ x: 1320, y: tableHeight }"
         rowKey="id"
         @change="handleTableChange"
       >
@@ -111,6 +123,14 @@
             </a-select>
           </a-form-item>
 
+          <a-form-item label="厂商">
+            <a-select v-decorator="['vendor']" allowClear placeholder="可选">
+              <a-select-option v-for="v in vendors" :key="v.id" :value="v.id">
+                {{ v.name }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+
           <a-divider>SNMP</a-divider>
           <a-form-item label="启用 SNMP">
             <a-switch
@@ -151,7 +171,17 @@
 </template>
 
 <script>
-import { createSwitch, deleteSwitch, listLocations, listSnmpProfiles, listSwitches, updateSwitch, syncSwitchSnmp } from '@/api/cmdb'
+import {
+  createSwitch,
+  deleteSwitch,
+  listLocations,
+  listSnmpProfiles,
+  listSwitches,
+  updateSwitch,
+  syncSwitchSnmp,
+  listVendors,
+  importSwitches
+} from '@/api/cmdb'
 
 export default {
   name: 'Switches',
@@ -166,11 +196,13 @@ export default {
         total: 0,
         showTotal: (total) => `共 ${total} 条`
       },
+      tableHeight: 520,
       columns: [
         { title: '资产编号', dataIndex: 'asset_tag', key: 'asset_tag', width: 160 },
         { title: '名称', dataIndex: 'name', key: 'name', width: 180 },
         { title: '主机名', dataIndex: 'hostname', key: 'hostname', width: 180 },
         { title: '管理IP', dataIndex: 'ip_address', key: 'ip_address', width: 140 },
+        { title: '厂商', dataIndex: 'vendor_name', key: 'vendor_name', width: 140 },
         { title: '版本', dataIndex: 'version_info', key: 'version_info', width: 200 },
         { title: '状态', dataIndex: 'status_label', key: 'status_label', width: 90 },
         { title: 'SNMP', dataIndex: 'snmp_enabled', key: 'snmp_enabled', width: 90, scopedSlots: { customRender: 'snmp_enabled' } },
@@ -186,6 +218,7 @@ export default {
         { value: 'lost', label: '丢失' }
       ],
       locations: [],
+      vendors: [],
       snmpProfiles: [],
       modalVisible: false,
       modalLoading: false,
@@ -199,18 +232,55 @@ export default {
   created () {
     this.bootstrap()
   },
+  mounted () {
+    this.updateTableHeight()
+    window.addEventListener('resize', this.updateTableHeight)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.updateTableHeight)
+  },
   methods: {
+    updateTableHeight () {
+      const h = window.innerHeight || 800
+      this.tableHeight = Math.max(h - 260, 220)
+    },
     async bootstrap () {
       await Promise.all([this.fetch(1), this.fetchLookups()])
     },
+    async handleImport ({ file }) {
+      if (!file) return
+      this.loading = true
+      try {
+        const res = await importSwitches(file)
+        const { created = 0, updated = 0, errors = [] } = res
+        let msg = `导入完成，新增 ${created} 条，更新 ${updated} 条`
+        if (errors && errors.length) {
+          msg += `，有 ${errors.length} 条失败`
+          this.$notification.error({
+            message: '部分失败',
+            description: errors.slice(0, 5).join('；') + (errors.length > 5 ? '…' : '')
+          })
+        } else {
+          this.$message.success(msg)
+        }
+        this.fetch(this.pagination.current || 1)
+      } catch (e) {
+        const detail = (e.response && e.response.data && e.response.data.detail) || e.message
+        this.$notification.error({ message: '导入失败', description: detail })
+      } finally {
+        this.loading = false
+      }
+    },
     async fetchLookups () {
       try {
-        const [locationsData, profilesData] = await Promise.all([
+        const [locationsData, profilesData, vendorsData] = await Promise.all([
           listLocations({ page: 1 }),
-          listSnmpProfiles({ page: 1, is_active: 1 })
+          listSnmpProfiles({ page: 1, is_active: 1 }),
+          listVendors({ page: 1, page_size: 500 })
         ])
         this.locations = locationsData.results || []
         this.snmpProfiles = profilesData.results || []
+        this.vendors = vendorsData.results || []
       } catch (e) {
         // ignore
       }
@@ -243,12 +313,13 @@ export default {
         this.$message.info('没有数据可导出')
         return
       }
-      const headers = ['资产编号', '名称', '主机名', '管理IP', '版本', '状态', 'SNMP', 'SNMP配置', '位置']
+      const headers = ['资产编号', '名称', '主机名', '管理IP', '厂商', '版本', '状态', 'SNMP', 'SNMP配置', '位置']
       const rows = this.dataSource.map(r => [
         r.asset_tag,
         r.name,
         r.hostname,
         r.ip_address,
+        r.vendor_name,
         r.version_info,
         r.status_label,
         r.snmp_enabled ? '启用' : '关闭',
@@ -268,11 +339,15 @@ export default {
       this.syncLoadingId = record.id
       try {
         const res = await syncSwitchSnmp(record.id)
-        const ports = res.port_assets || {}
-        const ifs = res.interfaces || {}
-        const description = `端口资产 新增${ports.created || 0}/更新${ports.updated || 0}/跳过${ports.skipped || 0}/错误${ports.errors || 0}; 接口 ${ifs.interfaces || 0} 条，地址 ${ifs.addresses || 0} 条`
-        this.$notification.success({ message: '同步完成', description })
-        this.fetch(this.pagination.current || 1)
+        if (res && res.status === 'queued') {
+          const description = `任务已提交，接口任务ID ${res.interfaces_task_id}`
+          this.$notification.success({ message: '已提交接口同步任务', description })
+        } else {
+          const ifs = res.interfaces || {}
+          const description = `接口 ${ifs.interfaces || 0} 条，地址 ${ifs.addresses || 0} 条`
+          this.$notification.success({ message: '接口同步完成', description })
+          this.fetch(this.pagination.current || 1)
+        }
       } catch (e) {
         this.$notification.error({
           message: '同步失败',
